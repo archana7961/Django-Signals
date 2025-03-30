@@ -1,0 +1,36 @@
+Yes, Django signals run in the same database transaction unless explicitly handled otherwise.
+
+
+##Code:
+
+from django.db import transaction
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+
+@receiver(post_save, sender=User)
+def signal_handler(sender, instance, **kwargs):
+    print("Signal received. Raising an exception...")
+    raise Exception("Error in signal!")
+
+try:
+    with transaction.atomic():
+        User.objects.create(username="testuser")
+        print("User creation successful!")
+except Exception as e:
+    print(f"Transaction rolled back due to: {e}")
+
+print(User.objects.filter(username="testuser").exists())
+
+
+
+#Expected Output:
+
+Signal received. Raising an exception...
+Transaction rolled back due to: Error in signal!
+False
+
+
+
+The fact that the user is not saved in the database proves that Django signals participate in the same transaction by default.
+

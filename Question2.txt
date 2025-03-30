@@ -1,0 +1,25 @@
+Yes, Django signals execute in the same thread by default.
+
+
+##Code:
+
+import threading
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+
+@receiver(post_save, sender=User)
+def signal_handler(sender, instance, **kwargs):
+    print(f"Signal is running in thread: {threading.get_ident()}")
+
+print(f"Main thread ID: {threading.get_ident()}")
+User.objects.create(username="testuser")
+
+
+Expected Output:
+
+
+Main thread ID: 140700853143296
+Signal is running in thread: 140700853143296
+
+Since both the caller and the signal handler run in the same thread, this confirms Django signals are not asynchronous by default.
